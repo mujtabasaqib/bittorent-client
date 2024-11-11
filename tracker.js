@@ -1,6 +1,7 @@
 'use strict';
 
 import dgram from 'dgram'
+import crypto from 'crypto';
 
 function decodeData(uint8Array) {
   return new TextDecoder('utf-8').decode(uint8Array);
@@ -39,12 +40,28 @@ function respType(resp) {
   // ...
 }
 
+//Build connection request
 function buildConnReq() {
-  // ...
+  const buf = Buffer.alloc(16); 
+
+  // connection id (fixed for bep message)
+  buf.writeUInt32BE(0x417, 0); 
+  buf.writeUInt32BE(0x27101980, 4);
+  // action
+  buf.writeUInt32BE(0, 8); 
+  // transaction id
+  crypto.randomBytes(4).copy(buf, 12); 
+
+  return buf;
 }
 
+//Parse connection response
 function parseConnResp(resp) {
-  // ...
+  return {
+    action: resp.readUInt32BE(0),
+    transactionId: resp.readUInt32BE(4),
+    connectionId: resp.slice(8)
+  }
 }
 
 function buildAnnounceReq(connId) {
