@@ -3,6 +3,7 @@
 import dgram from 'dgram'
 import crypto from 'crypto';
 import { genId } from './util.js';
+import { size, infoHash } from './torrent-parser.js';
 
 function decodeData(uint8Array) {
   return new TextDecoder('utf-8').decode(uint8Array);
@@ -84,13 +85,13 @@ function buildAnnounceReq(connId, torrent, port=6881) {
   // transaction id
   crypto.randomBytes(4).copy(buf, 12);
   // info hash
-  //torrentParser.infoHash(torrent).copy(buf, 16);
+  infoHash(torrent).copy(buf, 16);
   // peerId
-  util.genId().copy(buf, 36);
+  genId().copy(buf, 36);
   // downloaded
   Buffer.alloc(8).copy(buf, 56);
   // left
-  //torrentParser.size(torrent).copy(buf, 64);
+  size(torrent).copy(buf, 64);
   // uploaded
   Buffer.alloc(8).copy(buf, 72);
   // event
