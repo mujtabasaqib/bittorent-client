@@ -11,22 +11,30 @@ function decodeData(uint8Array) {
 
 export function getPeers(torrent, callback) {
   const socket = dgram.createSocket('udp4');
+  console.log("socket created: ",socket);
   const decodedAnnounce = decodeData(torrent.announce);
   const url = new URL(decodedAnnounce);
 
+  //add console log statements for decoded and url
+  console.log("decodedAnnounce: ", decodedAnnounce);
+  console.log("url: ", url);
+
   // 1. send connect request
-  udpSend(socket, buildConnReq(), url);
+  udpSend(socket, buildConnReq(), url); //code runs uptill here
 
   socket.on('message', response => {
     if (respType(response) === 'connect') {
       // 2. receive and parse connect response
       const connResp = parseConnResp(response);
+      console.log("reached, connection response: ", connResp);
       // 3. send announce request
       const announceReq = buildAnnounceReq(connResp.connectionId, torrent);
       udpSend(socket, announceReq, url);
     } else if (respType(response) === 'announce') {
       // 4. parse announce response
       const announceResp = parseAnnounceResp(response);
+      console.log("reached, announce response: ", announceResp);
+      console.log("announceResp obj: ", announceResp);
       // 5. pass peers to callback
       callback(announceResp.peers);
     }
@@ -35,6 +43,8 @@ export function getPeers(torrent, callback) {
 
 function udpSend(socket, message, rawUrl, callback=()=>{}) {
   const url = new URL(rawUrl);
+  console.log("raw url: ", url)
+  console.log("message: ", message);
   socket.send(message, 0, message.length, url.port, url.host, callback);
 }
 
@@ -64,6 +74,8 @@ function buildConnReq() {
   buf.writeUInt32BE(0, 8); 
   // transaction id
   crypto.randomBytes(4).copy(buf, 12); 
+
+  console.log("made buffer for connection request: ",buf);
 
   return buf;
 }
@@ -106,6 +118,8 @@ function buildAnnounceReq(connId, torrent, port=6881) {
   buf.writeInt32BE(-1, 92);
   // port
   buf.writeUInt16BE(port, 96);
+
+  console.log("announce req buffer: ",buf);
 
   return buf;
 }
