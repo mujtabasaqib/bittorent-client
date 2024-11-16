@@ -16,13 +16,15 @@ export function getPeers(torrent, callback) {
   const url = new URL(decodedAnnounce);
 
   //add console log statements for decoded and url
-  console.log("decodedAnnounce: ", decodedAnnounce);
+  //console.log("decodedAnnounce: ", decodedAnnounce);
   console.log("url: ", url);
 
   // 1. send connect request
   udpSend(socket, buildConnReq(), url); //code runs uptill here
 
   socket.on('message', response => {
+    console.log('hello')
+    console.log('response from server: ',response);
     if (respType(response) === 'connect') {
       // 2. receive and parse connect response
       const connResp = parseConnResp(response);
@@ -39,13 +41,24 @@ export function getPeers(torrent, callback) {
       callback(announceResp.peers);
     }
   });
+
+  socket.on('error', (err) => {
+    console.error('Socket error:', err);
+  });
+  
+  socket.on('close', () => {
+    console.log('Socket closed');
+  });
 };
 
-function udpSend(socket, message, rawUrl, callback=()=>{}) {
+function udpSend(socket, message, rawUrl, callback=(err)=>{if (err) {
+  console.error('Error sending message:', err);
+} else {
+  console.log('Message sent successfully');
+}}) {
   const url = new URL(rawUrl);
-  console.log("raw url: ", url)
   console.log("message: ", message);
-  socket.send(message, 0, message.length, url.port, url.host, callback);
+  socket.send(message, 0, message.length, url.port, url.hostname, callback);
 }
 
 function respType(resp) {
